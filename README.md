@@ -19,3 +19,6 @@ Projeyi çalıştırmak için:
 cd nextrade
 npm install
 npm run dev
+
+
+
