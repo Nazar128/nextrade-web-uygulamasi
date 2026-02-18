@@ -10,7 +10,7 @@ const CategorySection = () => {
      
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
         <div>
-          <h2 className="text-5xl font-black text-slate-800 tracking-tighter">
+          <h2 className="text-5xl font-black text-slate-700 tracking-tighter">
             Tarzını <span className="text-blue-600">Keşfet</span>
           </h2>
           <p className="text-slate-500 mt-4 text-lg max-w-md">

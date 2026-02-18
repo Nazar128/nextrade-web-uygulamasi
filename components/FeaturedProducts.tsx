@@ -2,7 +2,8 @@
 
 import React, { useCallback } from "react";
 import useEmblaCarousel from "embla-carousel-react";
-import { featuredProducts } from "@/data/featuredProducts";
+
+import { featuredProducts } from "@/data/products"; 
 import ProductCard from "@/components/ProductCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -28,7 +29,6 @@ const FeaturedProducts = () => {
           </h2>
         </div>
 
-       
         <div className="flex gap-3 mb-1">
           <button
             onClick={scrollPrev}
@@ -46,7 +46,6 @@ const FeaturedProducts = () => {
         </div>
       </div>
 
-   
       <div className="overflow-hidden cursor-grab active:cursor-grabbing" ref={emblaRef}>
         <div className="flex -ml-6">
           {featuredProducts.map((product) => (
@@ -59,7 +58,6 @@ const FeaturedProducts = () => {
           ))}
         </div>
       </div>
-
     </section>
   );
 };
