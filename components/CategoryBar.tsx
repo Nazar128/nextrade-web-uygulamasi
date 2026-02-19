@@ -4,9 +4,12 @@ import { Categories } from '@/data/Categories';
 import Link from 'next/link';
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Button } from './ui/button';
 
 const CategoryBar = () => {
     const [activeTab, setActiveTab] = useState<number | null>(null);
+    const router = useRouter();
 
     return (
         <div 
@@ -47,9 +50,11 @@ const CategoryBar = () => {
                                         </p>
                                         
                                         {item.subCategories.map((sub) => (
-                                            <Link 
+                                            <Link
+                                                href={`/routes/category/${sub.id}`}
                                                 key={sub.id} 
-                                                href={`/category/${item.id}/${sub.id}`}
+                                                //onClick={() => router.push('routes/category/[id]')}
+                                    
                                                 className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-white/5 text-slate-300 hover:text-white transition-all group/item"
                                             >
                                                 <span className="text-sm font-medium">

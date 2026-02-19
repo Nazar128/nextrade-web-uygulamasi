@@ -126,3 +126,39 @@
     @apply bg-background text-foreground;
   }
 }
+@layer base {
+  /* Chrome, Edge ve Safari için */
+  ::-webkit-scrollbar {
+    width: 14px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #00081e; 
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #0c1e39; 
+    border-radius: 10px;
+    border: 2px solid #030712; 
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #003282; 
+  }
+
+  /* Firefox için */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #1f2937 #030712;
+  }
+}
+
+/* Filtre Paneli İçin Özel Scrollbar Sınıfı */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px; /* Filtre içinde daha ince olsun */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #00112d; /* gray-700 */
+  border-radius: 20px;
+}

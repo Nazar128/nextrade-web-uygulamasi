@@ -7,7 +7,6 @@ import { motion } from "framer-motion";
 const BrandSection = () => {
     return (
         <section className="max-w-[1440px] py-24 bg-gray-950 overflow-hidden relative">
-            {/* Başlık (Opsiyonel) */}
             <div className=" mx-auto px-6 mb-12">
                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em] text-center">
                     Global Partnerlerimiz

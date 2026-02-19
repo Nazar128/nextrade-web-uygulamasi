@@ -50,7 +50,7 @@ const ProductCard = ({ product }: Props) => {
           {product.title}
         </h3>
 
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex flex-wrap items-center justify-between gap-8 mt-6">
           <div className="flex flex-col">
             {product.oldPrice && (
               <span className="text-xs text-slate-500 line-through">

@@ -78,6 +78,7 @@ export const Categories: Category[] = [
       { id: 702, title: "Topuklu Ayakkabı" },
       { id: 703, title: "Sırt Çantası" },
       { id: 704, title: "Kol Çantası" },
+       { id: 705, title: "Laptop Çantası" },
     ],
   },
   {
