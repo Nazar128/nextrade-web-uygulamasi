@@ -5,6 +5,7 @@ import { products } from '@/data/products';
 import { useParams } from 'next/navigation';
 import { SlidersHorizontal, Check, ArrowUpDown, Percent, Box, Star } from 'lucide-react';
 import CategoryBar from '@/components/CategoryBar';
+import Link from 'next/link';
 
 const Page = () => {
   const params = useParams();
@@ -57,7 +58,7 @@ const Page = () => {
 
   return (
     <div className='min-h-screen bg-gray-950 text-slate-200'>
-      <CategoryBar/>
+      <CategoryBar />
       <div className='max-w-[1500px] mx-auto px-6 py-4'>
 
         <div className="mb-2 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-2">
@@ -205,7 +206,10 @@ const Page = () => {
             {filteredProducts.length > 0 ? (
               <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-12'>
                 {filteredProducts.map((item) => (
-                  <ProductCard key={item.id} product={item} />
+                  <Link key={item.id} href={`/routes/product/${item.id}`} className=''>
+                    <ProductCard key={item.id} product={item} />
+                  </Link>
+
                 ))}
               </div>
             ) : (

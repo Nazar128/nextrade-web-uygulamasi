@@ -38,7 +38,7 @@ const Navbar = () => {
         </Link>
 
         
-        <Link href="/card" className={`relative flex items-center gap-2 hover:text-white transition-colors ${path === "/card" ? "text-blue-400" : ""}`}>
+        <Link href="/routes/shoppingCart" className={`relative flex items-center gap-2 hover:text-white transition-colors ${path === "/routes/shoppingCart" ? "text-blue-400" : ""}`}>
           <div className='relative'>
             <ShoppingCart className="w-5 h-5" />
             <span className="absolute -top-2 -right-2 bg-blue-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full ring-2 ring-slate-900 animate-pulse">3</span>
