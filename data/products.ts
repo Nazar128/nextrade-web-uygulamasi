@@ -1,11 +1,11 @@
 export type Product = {
   id: number;
   title: string;
-  description: string; // Yeni eklendi
+  description: string; 
   price: number;
   oldPrice?: number;
   image: string;
-  images?: string[]; // Detay sayfası slider'ı için opsiyonel ek görseller
+  images?: string[]; 
   categoryId: number;    
   subCategoryId: number; 
   category: string;
@@ -18,7 +18,7 @@ export type Product = {
   salesCount: number;
   inStock: boolean;
   discountRate?: number; 
-  slug: string; // URL yapısı için gerekli
+  slug: string; 
 };
 
 export const products: Product[] = [
