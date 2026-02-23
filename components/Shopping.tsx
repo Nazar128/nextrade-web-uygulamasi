@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, CreditCard } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const Shopping = () => {
     const [cartItems, setCartItems] = useState<any[]>([]);
@@ -36,6 +37,7 @@ const Shopping = () => {
     const subTotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     const shipping = (subTotal > 5000 || cartItems.length === 0) ? 0 : 150;
     const total = subTotal + shipping;
+    const router = useRouter();
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -97,7 +99,7 @@ const Shopping = () => {
                         </div>
                     </div>
 
-                    <button className="w-full h-14 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl mt-8 transition-all active:scale-95 shadow-lg shadow-blue-600/20">
+                    <button onClick={() => router.push("/routes/checkOut")} className="w-full h-14 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl mt-8 transition-all active:scale-95 shadow-lg shadow-blue-600/20">
                         ÖDEMEYE GEÇ
                     </button>
                 </div>
