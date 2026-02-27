@@ -11,14 +11,12 @@ const OrderSummary = ({ isFinalStep }: OrderSummaryProps) => {
   const router = useRouter();
   const [cartItems, setCartItems] = useState<any[]>([]);
 
-  // Sepetteki gerçek verileri çekiyoruz
   useEffect(() => {
     const savedCart = JSON.parse(localStorage.getItem('cart') || '[]');
     setCartItems(savedCart);
   }, []);
 
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  // Shopping bileşenindeki kargo mantığıyla aynı (5000 TL üzeri bedava)
   const shipping = (subtotal > 5000 || cartItems.length === 0) ? 0 : 150;
   const total = subtotal + shipping;
 
