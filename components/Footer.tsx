@@ -3,22 +3,24 @@ import { Github, Instagram, Linkedin } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
+import { usePathname } from 'next/navigation'
 
-type UserRole = "guest" | "customer" | "seller"
+type UserRole = "guest" | "customer" | "seller" 
 
 const mockUser = {
   role: "customer" as UserRole
 }
-
 const Footer = () => {
-
   const role = mockUser.role
+  const pathname = usePathname()
 
+  if (pathname.startsWith('/routes/admin')) {
+    return null;
+  }
   return (
     <footer className="bg-gradient-to-t from-gray-400 via-gray-700 to-gray-950 text-white px-6 py-12">
-
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
-
+        
         <div className="flex flex-col items-start gap-4">
           <Link href="/">
             <Image
@@ -36,7 +38,6 @@ const Footer = () => {
 
         <div className="flex flex-col gap-2">
           <h3 className="font-semibold text-lg mb-2">Menü</h3>
-
           <Link href="/">Ana Sayfa</Link>
 
           {role === "guest" && (
@@ -48,9 +49,9 @@ const Footer = () => {
 
           {role === "customer" && (
             <>
-              <Link href="/cart">Sepetim</Link>
-              <Link href="/orders">Siparişlerim</Link>
-              <Link href="/profile">Profilim</Link>
+              <Link href="/routes/shoppingCart">Sepetim</Link>
+              <Link href="/routes/profile/orders">Siparişlerim</Link>
+              <Link href="/routes/profile">Profilim</Link>
             </>
           )}
 
@@ -103,9 +104,7 @@ const Footer = () => {
       <div className="border-t border-gray-600 mt-12 pt-6 text-center text-sm text-gray-200">
         © 2026 Tüm Hakları Saklıdır.
       </div>
-
     </footer>
   )
 }
-
 export default Footer
