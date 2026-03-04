@@ -17,6 +17,9 @@ const menuItems = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/routes/admin' },
   { name: 'Kullanıcılar', icon: Users, path: '/routes/admin/users' },
   { name: 'İçerik Yönetimi', icon: Layers, path: '/routes/admin/cms' },
+  { name: 'Ürünler', icon: Settings, path: '/routes/admin/products' },
+  { name: 'Kategoriler', icon: Settings, path: '/routes/admin/categories' },
+  { name: 'Markalar', icon: Settings, path: '/routes/admin/brands' },
   { name: 'Siparişler', icon: ShoppingBag, path: '/routes/admin/orders' },
   { name: 'Ayarlar', icon: Settings, path: '/routes/admin/settings' },
 ];
