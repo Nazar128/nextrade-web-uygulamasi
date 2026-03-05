@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ScrollTopButton from "@/components/ScrollTopButton";
+import { AuthProvider } from '../context/AuthContext';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,13 +30,17 @@ export default function RootLayout({
     <html lang="en" >
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-gray-950 text-white`}
-      > <Navbar/>
+      >
+        <AuthProvider>
+             <Navbar/>
           <main className="flex flex-grow">
             {children}
           </main>
         <ScrollTopButton />
 
         <Footer />
+        </AuthProvider>
+        
       </body>
     </html>
   );

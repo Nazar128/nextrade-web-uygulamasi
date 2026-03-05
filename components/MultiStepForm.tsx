@@ -1,15 +1,22 @@
 "use client";
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   ChevronRight, 
   ChevronLeft, 
-  Check, 
   Package, 
   DollarSign, 
   Image as ImageIcon,
-  CheckCircle2
+  CheckCircle2,
+  Loader2,
+  UploadCloud,
+  FileCheck
 } from 'lucide-react';
 import { Categories } from '@/data/Categories'; 
+import { db, storage, auth } from "@/lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { saveLog } from "@/lib/logger";
 
 interface MultiStepFormProps {
   onSuccess: () => void;
@@ -18,7 +25,12 @@ interface MultiStepFormProps {
 export default function MultiStepForm({ onSuccess }: MultiStepFormProps) {
   const [step, setStep] = useState(1);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+
   const [formData, setFormData] = useState({
     title: '',
     categoryId: '',
@@ -28,13 +40,13 @@ export default function MultiStepForm({ onSuccess }: MultiStepFormProps) {
     description: ''
   });
 
-  const steps = [
-    { id: 1, name: "Ürün Bilgisi", icon: <Package size={18}/> },
-    { id: 2, name: "Fiyat & Beden", icon: <DollarSign size={18}/> },
-    { id: 3, name: "Medya", icon: <ImageIcon size={18}/> }
-  ];
-
-  const sizes = ["XS", "S", "M", "L", "XL", "XXL", "36", "38", "40", "42", "Standart"];
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setIsAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const activeSubCategories = useMemo(() => {
     const selectedCat = Categories.find(c => c.id === Number(formData.categoryId));
@@ -50,6 +62,80 @@ export default function MultiStepForm({ onSuccess }: MultiStepFormProps) {
   const nextStep = () => setStep((prev) => Math.min(prev + 1, 3));
   const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
 
+  const handleFinalSubmit = async () => {
+    if (!currentUser) {
+      alert("Oturumunuz bulunamadı. Lütfen giriş yapın.");
+      return;
+    }
+    if (!imageFile) return alert("Lütfen bir ürün görseli seçin!");
+    if (!formData.title || !formData.price) return alert("Lütfen başlık ve fiyat girin!");
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const fileExtension = imageFile.name.split('.').pop();
+      const fileName = `${Date.now()}_${currentUser.uid}.${fileExtension}`;
+      const storageRef = ref(storage, `products/${fileName}`);
+      
+      const uploadTask = uploadBytesResumable(storageRef, imageFile);
+
+      uploadTask.on('state_changed', 
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(Math.round(progress));
+        }, 
+        (error) => {
+          console.error("Yükleme hatası:", error);
+          alert("Görsel yüklenemedi!");
+          setIsUploading(false);
+        }, 
+        async () => {
+          const imageUrl = await getDownloadURL(uploadTask.snapshot.ref);
+
+          try {
+            await addDoc(collection(db, "products"), {
+              title: formData.title,
+              categoryId: formData.categoryId,
+              subCategoryId: formData.subCategoryId,
+              price: Number(formData.price),
+              stock: Number(formData.stock),
+              description: formData.description || "",
+              sizes: selectedSizes,
+              imageUrl: imageUrl,
+              sellerId: currentUser.uid,
+              sellerName: currentUser.displayName || "Mağaza",
+              status: "pending",
+              createdAt: serverTimestamp()
+            });
+            
+            onSuccess();
+            await saveLog('CREATE_PRODUCT', `${formData.title} isimli yeni ürün eklendi.`);
+          } catch (dbError) {
+            console.error("Firestore hatası:", dbError);
+            alert("Ürün kaydedilirken bir hata oluştu.");
+          } finally {
+            setIsUploading(false);
+          }
+        }
+      );
+
+    } catch (error) {
+      console.error("Genel hata:", error);
+      setIsUploading(false);
+    }
+  };
+
+  const steps = [
+    { id: 1, name: "Ürün Bilgisi", icon: <Package size={18}/> },
+    { id: 2, name: "Fiyat & Beden", icon: <DollarSign size={18}/> },
+    { id: 3, name: "Medya", icon: <ImageIcon size={18}/> }
+  ];
+
+  const sizes = ["XS", "S", "M", "L", "XL", "XXL", "36", "38", "40", "42", "Standart"];
+
+  if (isAuthLoading) return <div className="p-10 text-center text-gray-500">Hazırlanıyor...</div>;
+
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-[2.5rem] p-8 md:p-12 shadow-2xl max-w-3xl mx-auto text-gray-100">
       
@@ -59,7 +145,7 @@ export default function MultiStepForm({ onSuccess }: MultiStepFormProps) {
           <div key={s.id} className="relative z-10 flex flex-col items-center gap-3">
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-2 ${
               step >= s.id 
-              ? 'bg-indigo-600 border-indigo-400 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)] rotate-3' 
+              ? 'bg-indigo-600 border-indigo-400 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)]' 
               : 'bg-gray-900 border-gray-800 text-gray-600'
             }`}>
               {step > s.id ? <CheckCircle2 size={24} /> : s.icon}
@@ -73,113 +159,96 @@ export default function MultiStepForm({ onSuccess }: MultiStepFormProps) {
 
       <div className="min-h-[400px]">
         {step === 1 && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-white">Temel Bilgiler</h2>
-              <p className="text-gray-500 text-sm">Ürününüzün ismini ve kategorisini belirleyin.</p>
-            </div>
-            
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Temel Bilgiler</h2>
             <div className="space-y-5">
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1 mb-2 block tracking-widest">Ürün Başlığı</label>
-                <input 
-                  type="text" 
-                  value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  placeholder="Örn: Slim Fit Pamuklu Jean" 
-                  className="w-full p-4 bg-gray-950 border border-gray-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-gray-200 placeholder:text-gray-700" 
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase ml-1 mb-2 block tracking-widest">Ana Kategori</label>
-                  <select 
-                    value={formData.categoryId}
-                    onChange={(e) => setFormData({...formData, categoryId: e.target.value, subCategoryId: ''})}
-                    className="w-full p-4 bg-gray-950 border border-gray-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none text-gray-300 appearance-none"
-                  >
-                    <option value="">Seçiniz</option>
-                    {Categories.map(cat => <option key={cat.id} value={cat.id}>{cat.title}</option>)}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase ml-1 mb-2 block tracking-widest">Alt Kategori</label>
-                  <select 
-                    disabled={!formData.categoryId}
-                    value={formData.subCategoryId}
-                    onChange={(e) => setFormData({...formData, subCategoryId: e.target.value})}
-                    className="w-full p-4 bg-gray-950 border border-gray-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-20 text-gray-300 appearance-none"
-                  >
-                    <option value="">Seçiniz</option>
-                    {activeSubCategories.map(sub => <option key={sub.id} value={sub.id}>{sub.title}</option>)}
-                  </select>
-                </div>
+              <input 
+                type="text" 
+                value={formData.title}
+                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                placeholder="Ürün Başlığı" 
+                className="w-full p-4 bg-gray-950 border border-gray-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500" 
+              />
+              <div className="grid grid-cols-2 gap-5">
+                <select 
+                  value={formData.categoryId}
+                  onChange={(e) => setFormData({...formData, categoryId: e.target.value, subCategoryId: ''})}
+                  className="w-full p-4 bg-gray-950 border border-gray-800 rounded-2xl outline-none"
+                >
+                  <option value="">Kategori Seçin</option>
+                  {Categories.map(cat => <option key={cat.id} value={cat.id}>{cat.title}</option>)}
+                </select>
+                <select 
+                  disabled={!formData.categoryId}
+                  value={formData.subCategoryId}
+                  onChange={(e) => setFormData({...formData, subCategoryId: e.target.value})}
+                  className="w-full p-4 bg-gray-950 border border-gray-800 rounded-2xl outline-none disabled:opacity-30"
+                >
+                  <option value="">Alt Kategori</option>
+                  {activeSubCategories.map(sub => <option key={sub.id} value={sub.id}>{sub.title}</option>)}
+                </select>
               </div>
             </div>
           </div>
         )}
 
         {step === 2 && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-white">Satış & Varyant</h2>
-              <p className="text-gray-500 text-sm">Fiyatlandırma ve stok seçeneklerini düzenleyin.</p>
-            </div>
-
+          <div className="space-y-8">
+            <h2 className="text-2xl font-bold">Fiyat & Stok</h2>
             <div className="grid grid-cols-2 gap-6">
-              <div className="relative">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1 mb-2 block tracking-widest">Fiyat</label>
-                <div className="relative">
-                  <span className="absolute left-4 top-4 text-indigo-500 font-bold">₺</span>
-                  <input type="number" placeholder="0.00" className="w-full p-4 pl-10 bg-gray-950 border border-gray-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none" />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1 mb-2 block tracking-widest">Toplam Stok</label>
-                <input type="number" placeholder="0" className="w-full p-4 bg-gray-950 border border-gray-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none" />
-              </div>
+              <input 
+                type="number" 
+                value={formData.price}
+                onChange={(e) => setFormData({...formData, price: e.target.value})}
+                placeholder="Fiyat (₺)" 
+                className="w-full p-4 bg-gray-950 border border-gray-800 rounded-2xl" 
+              />
+              <input 
+                type="number" 
+                value={formData.stock}
+                onChange={(e) => setFormData({...formData, stock: e.target.value})}
+                placeholder="Stok Adedi" 
+                className="w-full p-4 bg-gray-950 border border-gray-800 rounded-2xl" 
+              />
             </div>
-
-            <div>
-              <label className="text-xs font-bold text-gray-500 uppercase ml-1 mb-3 block tracking-widest">Beden Seçenekleri</label>
-              <div className="flex flex-wrap gap-2">
-                {sizes.map(size => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => toggleSize(size)}
-                    className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all border-2 ${
-                      selectedSizes.includes(size)
-                      ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg'
-                      : 'bg-gray-950 border-gray-800 text-gray-500 hover:border-gray-600'
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-2">
+              {sizes.map(size => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => toggleSize(size)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold border-2 transition-all ${
+                    selectedSizes.includes(size) ? 'bg-indigo-600 border-indigo-400' : 'bg-gray-950 border-gray-800 text-gray-500'
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
             </div>
           </div>
         )}
 
         {step === 3 && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
-             <div className="mb-8 text-center">
-              <h2 className="text-2xl font-bold text-white">Ürün Görselleri</h2>
-              <p className="text-gray-500 text-sm">Müşterilerin dikkatini çekecek yüksek kaliteli kareler yükleyin.</p>
-            </div>
-            
-            <div className="group relative border-2 border-dashed border-gray-800 rounded-[2rem] p-16 hover:border-indigo-500/50 transition-all bg-gray-950/50 cursor-pointer overflow-hidden">
-              <div className="absolute inset-0 bg-indigo-600/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative z-10 flex flex-col items-center">
-                <div className="w-20 h-20 bg-gray-900 rounded-3xl flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-gray-800 transition-all">
-                  <ImageIcon className="text-indigo-500" size={36} />
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-center">Medya Yükle</h2>
+            <div className="relative border-2 border-dashed border-gray-800 rounded-[2rem] p-16 bg-gray-950/50 flex flex-col items-center justify-center">
+              <input 
+                type="file" 
+                accept="image/*"
+                className="absolute inset-0 opacity-0 cursor-pointer z-20" 
+                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+              />
+              {imageFile ? (
+                <div className="text-center">
+                  <FileCheck className="text-emerald-500 mx-auto mb-2" size={48} />
+                  <p className="text-emerald-400 font-bold">{imageFile.name}</p>
                 </div>
-                <p className="text-gray-300 font-semibold tracking-wide">Görselleri buraya sürükleyin</p>
-                <p className="text-gray-600 text-xs mt-2 uppercase tracking-widest">Veya dosya seçmek için tıklayın</p>
-              </div>
+              ) : (
+                <div className="text-center">
+                  <UploadCloud className="text-indigo-500 mx-auto mb-4" size={48} />
+                  <p className="text-gray-400">Tıklayın veya Görseli Sürükleyin</p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -188,19 +257,33 @@ export default function MultiStepForm({ onSuccess }: MultiStepFormProps) {
       <div className="flex justify-between mt-12 pt-8 border-t border-gray-800">
         <button 
           onClick={prevStep} 
-          className={`flex items-center gap-2 px-8 py-3 rounded-2xl font-bold transition-all ${
-            step === 1 ? 'invisible' : 'text-gray-500 hover:text-white hover:bg-gray-800'
-          }`}
+          disabled={isUploading}
+          className={`flex items-center gap-2 px-6 py-3 font-bold ${step === 1 ? 'invisible' : 'text-gray-500 hover:text-white'}`}
         >
           <ChevronLeft size={20} /> Geri
         </button>
         
         <button 
-          onClick={step === 3 ? onSuccess : nextStep} 
-          className="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black hover:bg-indigo-500 transition-all flex items-center gap-3 shadow-[0_15px_30px_-10px_rgba(79,70,229,0.6)] active:scale-95"
+          onClick={step === 3 ? handleFinalSubmit : nextStep} 
+          disabled={isUploading || !currentUser}
+          className="bg-indigo-600 min-w-[220px] text-white px-8 py-4 rounded-2xl font-black hover:bg-indigo-500 flex flex-col items-center justify-center gap-1 disabled:opacity-50"
         >
-          {step === 3 ? 'ÜRÜNÜ YAYINLA' : 'SONRAKİ ADIM'} 
-          <ChevronRight size={20} />
+          {isUploading ? (
+            <>
+              <div className="flex items-center gap-2">
+                <Loader2 className="animate-spin" size={20} />
+                <span>%{uploadProgress} YÜKLENİYOR</span>
+              </div>
+              <div className="w-32 h-1 bg-white/20 rounded-full mt-1 overflow-hidden">
+                <div className="h-full bg-white transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              {step === 3 ? 'ÜRÜNÜ YAYINLA' : 'SONRAKİ ADIM'} 
+              <ChevronRight size={20} />
+            </div>
+          )}
         </button>
       </div>
     </div>

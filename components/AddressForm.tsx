@@ -15,25 +15,22 @@ export const AddressForm = ({ onNext }: { onNext: (data: any) => void }) => {
   });
   const [errors, setErrors] = useState<any>({});
 
-  // Adres seçildiğinde formu otomatik dolduran fonksiyon
   const handleSelectAddress = (id: number) => {
     setSelectedAddressId(id);
     const findAddress = adresses.find(a => a.id === id);
     if (findAddress) {
       setFormData({
-        fullName: findAddress.fullName || '', // Verinizde fullName yoksa boş döner
+        fullName: findAddress.fullName || '', 
         phone: findAddress.phone || '',
         email: findAddress.email || '',
         city: findAddress.city,
         district: findAddress.district,
-        address: findAddress.fulladdress || '' // Veri dosyanızdaki alan isimlerine dikkat edin
+        address: findAddress.fulladdress || '' 
       });
-      // Adres seçildiğinde eski hataları temizle
       setErrors({});
     }
   };
 
-  // İlk açılışta ilk adresi forma yükle
   useEffect(() => {
     if (adresses.length > 0) {
       handleSelectAddress(adresses[0].id);
@@ -67,7 +64,6 @@ export const AddressForm = ({ onNext }: { onNext: (data: any) => void }) => {
           <div className='h-1 w-12 bg-blue-500 mx-auto mt-2 rounded-full'></div>
         </div>
 
-        {/* Kayıtlı Adresler */}
         <div className='space-y-3'>
           <h2 className='text-xs font-bold text-gray-400 uppercase ml-1'>Kayıtlı Adreslerim</h2>
           <div className='flex gap-3 overflow-x-auto pb-2 scrollbar-hide'>
@@ -84,7 +80,6 @@ export const AddressForm = ({ onNext }: { onNext: (data: any) => void }) => {
           </div>
         </div>
 
-        {/* Form Alanları */}
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           <div className='flex flex-col gap-1.5'>
             <label className='text-[10px] font-bold text-gray-400 uppercase ml-1'>Ad Soyad</label>
@@ -106,7 +101,6 @@ export const AddressForm = ({ onNext }: { onNext: (data: any) => void }) => {
             />
           </div>
 
-          {/* E-posta, Şehir, İlçe inputlarına da value={formData.xxx} eklemeyi unutmayın */}
           <div className='flex flex-col gap-1.5 md:col-span-2'>
             <label className='text-[10px] font-bold text-gray-400 uppercase ml-1'>E-posta</label>
             <input 

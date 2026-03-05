@@ -17,6 +17,9 @@ const Footer = () => {
   if (pathname.startsWith('/routes/admin')) {
     return null;
   }
+  if (pathname.startsWith('/routes/seller')) {
+    return null;
+  }
   return (
     <footer className="bg-gradient-to-t from-gray-400 via-gray-700 to-gray-950 text-white px-6 py-12">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
