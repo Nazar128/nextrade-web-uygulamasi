@@ -1,15 +1,55 @@
 "use client";
 
-import { Categories } from '@/data/Categories';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { Button } from './ui/button';
+import { ChevronDown, Loader2 } from 'lucide-react';
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+
+interface SubCategory {
+  id: string;
+  title: string;
+}
+
+interface Category {
+  id: string;
+  title: string;
+  subCategories: SubCategory[]; 
+  createdAt: any;
+}
 
 const CategoryBar = () => {
-    const [activeTab, setActiveTab] = useState<number | null>(null);
-    const router = useRouter();
+    const [activeTab, setActiveTab] = useState<string | null>(null);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const q = query(collection(db, "categories"), orderBy("createdAt", "desc"));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const data = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as Category[];
+
+            setCategories(data);
+            setLoading(false);
+        }, (error) => {
+            console.error("Firestore okuma hatası:", error);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="sticky top-[72px] w-full bg-slate-900/40 backdrop-blur-md border-b border-white/5 z-[90] h-[57px] flex items-center px-6">
+                <Loader2 size={14} className="animate-spin text-blue-500 mr-2" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Kategoriler Yükleniyor...</span>
+            </div>
+        );
+    }
 
     return (
         <div 
@@ -19,7 +59,7 @@ const CategoryBar = () => {
             <div className="max-w-[1500px] mx-auto px-2">
                 <div className="flex items-center justify-start gap-1 py-3 flex-wrap lg:flex-nowrap">
                     
-                    {Categories.map((item) => (
+                    {categories.map((item) => (
                         <div 
                             key={item.id} 
                             className="relative shrink-0" 
@@ -40,7 +80,7 @@ const CategoryBar = () => {
                                 />
                             </button>
 
-                            {activeTab === item.id && (
+                            {activeTab === item.id && item.subCategories && item.subCategories.length > 0 && (
                                 <div 
                                     className="absolute top-full left-0 mt-2 min-w-[240px] bg-slate-900 border border-white/10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] rounded-xl p-2 z-[100] animate-in fade-in zoom-in-95 duration-200"
                                 >
@@ -53,8 +93,6 @@ const CategoryBar = () => {
                                             <Link
                                                 href={`/routes/category/${sub.id}`}
                                                 key={sub.id} 
-                                                //onClick={() => router.push('routes/category/[id]')}
-                                    
                                                 className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-white/5 text-slate-300 hover:text-white transition-all group/item"
                                             >
                                                 <span className="text-sm font-medium">

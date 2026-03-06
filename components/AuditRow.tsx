@@ -1,6 +1,6 @@
 import React from "react";
 
-export const AuditRow = ({ product, onPreview }: any) => (
+export const AuditRow = ({ product, onPreview, onReject }: any) => (
   <tr className="hover:bg-slate-800/40 transition-colors border-b border-slate-900/50 block md:table-row">
     <td className="py-4 md:py-6 px-4 md:px-8 block md:table-cell">
       <div className="flex items-center gap-4 md:gap-8">
@@ -36,7 +36,7 @@ export const AuditRow = ({ product, onPreview }: any) => (
         >
           İNCELE
         </button>
-        <button className="flex-1 md:flex-none px-4 md:px-6 py-2 bg-slate-900/50 text-red-500/80 text-[10px] font-bold rounded-lg border border-red-500/10 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all active:scale-95 uppercase tracking-widest">
+        <button onClick={() => onReject(product.id)} className="flex-1 md:flex-none px-4 md:px-6 py-2 bg-slate-900/50 text-red-500/80 text-[10px] font-bold rounded-lg border border-red-500/10 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all active:scale-95 uppercase tracking-widest">
           RED
         </button>
       </div>

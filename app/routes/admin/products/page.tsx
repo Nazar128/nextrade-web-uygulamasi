@@ -1,36 +1,133 @@
 "use client";
-import React, { useState } from "react";
+
+import React, { useEffect, useState } from "react";
+
 import { Search, ShieldCheck } from "lucide-react";
+
+import { db } from "@/lib/firebase"; 
+
 import { AuditStats } from "@/components/AuditStats";
+
 import { AuditRow } from "@/components/AuditRow";
+
 import { ProductPreviewModal } from "@/components/ProductPreviewModal";
 
+import { 
+
+  onSnapshot, 
+
+  collection, 
+
+  query, 
+
+  where, 
+
+  doc, 
+
+  updateDoc 
+
+} from "firebase/firestore";
+
+
+
 export default function ProductAuditPage() {
+
+  const [products, setProducts] = useState<any[]>([]);
+
+  const [loading, setLoading] = useState(true);
+
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const pendingProducts = [
-    { 
-        id: "1", 
-        name: "Logitech G502 Hero", 
-        category: "Elektronik",
-        seller: "TeknoMarket", 
-        price: "1.450 TL", 
-        date: "04.03.2026",
-        stock: 120,
-        desc: "25K Sensörlü Oyuncu Mouse, RGB aydınlatma ve ayarlanabilir ağırlık seti."
-    },
-    { 
-        id: "2", 
-        name: "iPhone 15 Case - Silicon", 
-        category: "Aksesuar",
-        seller: "MobilDizayn", 
-        price: "450 TL", 
-        date: "04.03.2026",
-        stock: 500,
-        desc: "Magsafe uyumlu, kadife iç yüzeyli yüksek korumalı kılıf."
-    },
-  ];
+
+
+  useEffect(() => {
+
+    const q = query(
+
+      collection(db, "products"),
+
+      where("status", "==", "pending")
+
+    );
+
+
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+
+      const items: any[] = [];
+
+      querySnapshot.forEach((doc) => {
+
+        items.push({ id: doc.id, ...doc.data() });
+
+      });
+
+      setProducts(items);
+
+      setLoading(false);
+
+    });
+
+
+
+    return () => unsubscribe();
+
+  }, []);
+
+
+
+  const handleApprove = async (productId: string) => {
+
+    try {
+
+      const productRef = doc(db, "products", productId);
+
+      await updateDoc(productRef, {
+
+        status: "approved",
+
+        approvedAt: new Date().toISOString()
+
+      });
+
+      setIsModalOpen(false);
+
+    } catch (error) {
+
+      console.error("Onay hatası:", error);
+
+    }
+
+  };
+
+
+
+  const handleReject = async (productId: string) => {
+
+    try {
+
+      const productRef = doc(db, "products", productId);
+
+      await updateDoc(productRef, {
+
+        status: "rejected",
+
+        rejectedAt: new Date().toISOString()
+
+      });
+
+      setIsModalOpen(false);
+
+    } catch (error) {
+
+      console.error("Red hatası:", error);
+
+    }
+
+  };
+
 
   return (
     <div className="mx-auto px-4 lg:max-w-6xl md:px-8 py-6 md:py-12 space-y-8 md:space-y-12 min-h-screen text-slate-300 antialiased">
@@ -47,12 +144,12 @@ export default function ProductAuditPage() {
         
         <div className="inline-flex bg-slate-900/40 p-1 rounded-full border border-slate-800 shadow-inner">
           <div className="px-4 py-1.5 text-[10px] md:text-[11px] font-bold text-white uppercase tracking-widest">
-            {pendingProducts.length} Bekleyen İstek
+            {products.length} Bekleyen İstek
           </div>
         </div>
       </header>
 
-      <AuditStats count={pendingProducts.length} />
+      <AuditStats count={products.length} />
       <div className="space-y-6 rounded-2xl md:rounded-[32px] p-4 md:p-8 bg-slate-900/40 border border-slate-800/50 shadow-2xl">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-2">
           <h3 className="text-xs md:text-sm font-medium text-white uppercase tracking-widest">Onay Kuyruğu</h3>
@@ -79,7 +176,7 @@ export default function ProductAuditPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-900">
-              {pendingProducts.map((product) => (
+              {products.map((product) => (
                 <AuditRow 
                   key={product.id} 
                   product={product} 
@@ -95,6 +192,8 @@ export default function ProductAuditPage() {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         product={selectedProduct} 
+        onApprove={handleApprove}
+        onReject={handleReject}   
       />
     </div>
   );

@@ -5,9 +5,11 @@ interface ProductPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   product: any;
+  onApprove: (id: string) => void; 
+  onReject: (id: string) => void;
 }
 
-export const ProductPreviewModal = ({ isOpen, onClose, product }: ProductPreviewModalProps) => {
+export const ProductPreviewModal = ({ isOpen, onClose, product, onApprove, onReject }: ProductPreviewModalProps) => {
   if (!isOpen || !product) return null;
 
   return (
@@ -62,10 +64,10 @@ export const ProductPreviewModal = ({ isOpen, onClose, product }: ProductPreview
           </div>
 
           <div className="flex gap-4 mt-12 pt-8 border-t border-slate-900">
-            <button className="flex-1 bg-white text-black py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
+            <button onClick={() => onApprove(product.id)} className="flex-1 bg-white text-black py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
               <Check size={16} /> ÜRÜNÜ ONAYLA
             </button>
-            <button className="flex-1 bg-gradient-to-r from-slate-400 to-blue-700 text-white py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest border border-slate-800 hover:text-red-500 hover:border-red-500/30 transition-all">
+            <button onClick={() => onReject(product.id)} className="flex-1 bg-gradient-to-r from-slate-400 to-blue-700 text-white py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest border border-slate-800 hover:text-red-500 hover:border-red-500/30 transition-all">
               REDDET
             </button>
           </div>
