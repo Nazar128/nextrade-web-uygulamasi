@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { Star, ShoppingCart, Truck, RefreshCcw, Check, ArrowRight, Loader2 } from 'lucide-react';
 
 const ProductDetail = () => {
@@ -17,19 +18,27 @@ const ProductDetail = () => {
 
     useEffect(() => {
         const fetchProduct = async () => {
-            if (!productId) return;
-            try {
-                const docRef = doc(db, "products", productId);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    setProduct({ id: docSnap.id, ...docSnap.data() });
-                }
-            } catch (error) {
-                console.error("Ürün yüklenirken hata:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    if (!productId) return;
+    try {
+        const q = query(
+            collection(db, "products"), 
+            where("id", "==", Number(productId))
+        );
+        
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+            const docData = querySnapshot.docs[0];
+            setProduct({ id: docData.id, ...docData.data() });
+        } else {
+            console.log("Ürün bulunamadı!");
+        }
+    } catch (error) {
+        console.error("Hata:", error);
+    } finally {
+        setLoading(false);
+    }
+};
         fetchProduct();
     }, [productId]);
 
@@ -52,7 +61,7 @@ const ProductDetail = () => {
                 id: product.id,
                 title: product.title,
                 price: product.price,
-                image: product.imageUrl || product.image, // imageUrl kullanımına dikkat
+                image: product.imageUrl || product.image, 
                 brand: product.brand,
                 quantity: 1
             });

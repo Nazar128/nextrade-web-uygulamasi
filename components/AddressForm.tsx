@@ -1,10 +1,15 @@
 "use client";
-import { adresses } from '@/data/Addresses';
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { db, auth } from "@/lib/firebase"; 
+import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 export const AddressForm = ({ onNext }: { onNext: (data: any) => void }) => {
-  const [selectedAddressId, setSelectedAddressId] = useState(adresses[0]?.id);
+  const [user, setUser] = useState<any>(null);
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -15,27 +20,47 @@ export const AddressForm = ({ onNext }: { onNext: (data: any) => void }) => {
   });
   const [errors, setErrors] = useState<any>({});
 
-  const handleSelectAddress = (id: number) => {
-    setSelectedAddressId(id);
-    const findAddress = adresses.find(a => a.id === id);
-    if (findAddress) {
-      setFormData({
-        fullName: findAddress.fullName || '', 
-        phone: findAddress.phone || '',
-        email: findAddress.email || '',
-        city: findAddress.city,
-        district: findAddress.district,
-        address: findAddress.fulladdress || '' 
-      });
-      setErrors({});
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        await fetchAddresses(currentUser.uid);
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const fetchAddresses = async (userId: string) => {
+    try {
+      const q = query(collection(db, "users", userId, "addresses"));
+      const querySnapshot = await getDocs(q);
+      const addressesData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setSavedAddresses(addressesData);
+      
+      if (addressesData.length > 0) {
+        handleSelectAddress(addressesData[0]);
+      }
+    } catch (error) {
+      console.error("Adresler çekilirken hata:", error);
     }
   };
 
-  useEffect(() => {
-    if (adresses.length > 0) {
-      handleSelectAddress(adresses[0].id);
-    }
-  }, []);
+  const handleSelectAddress = (addr: any) => {
+    setSelectedAddressId(addr.id);
+    setFormData({
+      fullName: addr.fullName || '',
+      phone: addr.phone || '',
+      email: addr.email || '',
+      city: addr.city || '',
+      district: addr.district || '',
+      address: addr.address || ''
+    });
+    setErrors({});
+  };
 
   const validate = () => {
     let newErrors: any = {};
@@ -50,11 +75,29 @@ export const AddressForm = ({ onNext }: { onNext: (data: any) => void }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+const handleSubmit = async () => {
     if (validate()) {
-      onNext(formData);
+      try {
+        if (user && !selectedAddressId) {
+          const addressRef = collection(db, "users", user.uid, "addresses");
+          await addDoc(addressRef, {
+            ...formData,
+            createdAt: new Date().toISOString()
+          });
+          console.log("Yeni adres kaydedildi");
+        } else {
+          console.log("Mevcut adres seçildi, tekrar kaydedilmedi.");
+        }
+        
+        onNext(formData); 
+      } catch (error) {
+        console.error("Adres işlemi hatası:", error);
+        alert("İşlem sırasında bir hata oluştu.");
+      }
     }
   };
+
+  if (loading) return <div className="text-white text-center p-10">Adresler yükleniyor...</div>;
 
   return (
     <div className='w-full max-w-2xl bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/20 shadow-xl'>
@@ -64,21 +107,32 @@ export const AddressForm = ({ onNext }: { onNext: (data: any) => void }) => {
           <div className='h-1 w-12 bg-blue-500 mx-auto mt-2 rounded-full'></div>
         </div>
 
-        <div className='space-y-3'>
-          <h2 className='text-xs font-bold text-gray-400 uppercase ml-1'>Kayıtlı Adreslerim</h2>
-          <div className='flex gap-3 overflow-x-auto pb-2 scrollbar-hide'>
-            {adresses.map((item) => (
+        {savedAddresses.length > 0 && (
+          <div className='space-y-3'>
+            <h2 className='text-xs font-bold text-gray-400 uppercase ml-1'>Kayıtlı Adreslerim</h2>
+            <div className='flex gap-3 overflow-x-auto pb-2 scrollbar-hide'>
+              {savedAddresses.map((item) => (
+                <div 
+                  key={item.id}
+                  onClick={() => handleSelectAddress(item)}
+                  className={`flex-shrink-0 w-32 p-3 rounded-xl cursor-pointer border-2 transition-all ${selectedAddressId === item.id ? 'border-blue-500 bg-blue-500/20' : 'border-white/10 bg-white/5'}`}
+                >
+                  <p className='text-[10px] font-bold text-blue-400 uppercase truncate'>{item.fullName}</p>
+                  <p className='text-xs text-white truncate'>{item.city}</p>
+                </div>
+              ))}
               <div 
-                key={item.id}
-                onClick={() => handleSelectAddress(item.id)}
-                className={`flex-shrink-0 w-32 p-3 rounded-xl cursor-pointer border-2 transition-all ${selectedAddressId === item.id ? 'border-blue-500 bg-blue-500/20' : 'border-white/10 bg-white/5'}`}
+                onClick={() => {
+                  setSelectedAddressId(null);
+                  setFormData({ fullName: '', phone: '', email: user?.email || '', city: '', district: '', address: '' });
+                }}
+                className={`flex-shrink-0 w-32 p-3 rounded-xl cursor-pointer border-2 border-dashed border-white/20 flex items-center justify-center`}
               >
-                <p className='text-[10px] font-bold text-blue-400 uppercase'>{item.title}</p>
-                <p className='text-xs text-white truncate'>{item.city}</p>
+                <p className='text-[10px] font-bold text-gray-400 uppercase'>+ Yeni Ekle</p>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           <div className='flex flex-col gap-1.5'>

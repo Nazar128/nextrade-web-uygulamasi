@@ -181,6 +181,7 @@ export default function ProductAuditPage() {
                   key={product.id} 
                   product={product} 
                   onPreview={() => { setSelectedProduct(product); setIsModalOpen(true); }}
+                  onReject={handleReject}
                 />
               ))}
             </tbody>

@@ -1,12 +1,12 @@
 "use client";
 import React from 'react';
 import Shopping from '@/components/Shopping';
-import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 const CartPage = () => {
     return (
-        <main className="min-h-screen mx-auto py-16 px-4 md:px-6">
+        <main className="min-h-screen mx-auto py-16 px-4 md:px-6 bg-[#0a0a0a]">
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
                     <div>
@@ -22,7 +22,6 @@ const CartPage = () => {
                         <p className="text-gray-500 font-medium uppercase tracking-[0.2em] text-xs">Modern E-Commerce Experience</p>
                     </div>
                 </div>
-
                 <Shopping />
             </div>
         </main>
