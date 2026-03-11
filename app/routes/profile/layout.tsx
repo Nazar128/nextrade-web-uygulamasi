@@ -1,7 +1,7 @@
 "use client"
 import { usePathname } from 'next/navigation';
 import React from 'react'
-
+import CustomerGuard from "@/components/CustomerGuard";
 import { User, Package, Heart, MapPin, Settings, LogOut } from 'lucide-react';
 
 const menuItems = [
@@ -15,6 +15,7 @@ const menuItems = [
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {
     
   return (
+    <CustomerGuard>
     <div className="flex    text-white relative">
       
       <div className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none">
@@ -62,5 +63,6 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
       </main>
 
     </div>
+    </CustomerGuard>
   )
 }
