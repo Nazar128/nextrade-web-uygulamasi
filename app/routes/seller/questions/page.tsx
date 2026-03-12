@@ -37,7 +37,7 @@ const SellerQuestions = () => {
             const questionRef = doc(db, "questions", questionId);
             await updateDoc(questionRef, {
                 answer: answer.trim(),
-                answeredAt: new Date().toISOString() // İstatistik için eklenebilir
+                answeredAt: new Date().toISOString() 
             });
             toast.success("Cevabınız iletildi.");
             setReplyText({ ...replyText, [questionId]: '' });
