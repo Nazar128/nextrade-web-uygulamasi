@@ -12,13 +12,17 @@ import {
   Settings, 
   LogOut, 
   ChevronRight,
-  Store
+  Store,
+  FileQuestionMark,
+  FileQuestion,
+  FileQuestionIcon
 } from 'lucide-react';
 
 const sellerMenuItems = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/routes/seller/dashboard' },
   { name: 'Ürünlerim', icon: PackagePlus, path: '/routes/seller/manager' },
   { name: 'Siparişler', icon: ClipboardList, path: '/routes/seller/orders' },
+  { name: 'Sorular', icon: FileQuestionMark, path: '/routes/seller/questions' },
   
 ];
 
@@ -34,10 +38,7 @@ export const SellerSidebar = () => {
     <aside className="fixed left-0 top-0 h-screen w-64 bg-slate-950 border-r border-slate-900 flex flex-col z-40">
       <div className="p-8">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-900/20">
-            <Store className="text-white" size={22} strokeWidth={2.5} />
-          </div>
-          <span className="text-white font-bold text-lg tracking-tight">Seller Hub</span>
+          
         </div>
       </div>
 
