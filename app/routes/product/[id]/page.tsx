@@ -6,7 +6,7 @@ import { HelpCircle, MessageSquareText, ShieldCheck, Loader2 } from 'lucide-reac
 import { useParams } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs,setDoc,getDoc, doc, updateDoc, increment } from "firebase/firestore";
 
 const Page = () => {
     const params = useParams();
@@ -16,10 +16,38 @@ const Page = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        const analyticsRef = doc(db, "analytics", "store_stats");
+
+        const reportView = async () => {
+            try {
+                const docSnap = await getDoc(analyticsRef);
+                if (!docSnap.exists()) {
+                    await setDoc(analyticsRef, { totalViews: 1, activeUsers: 1 });
+                } else {
+                    await updateDoc(analyticsRef, {
+                        totalViews: increment(1),
+                        activeUsers: increment(1)
+                    });
+                }
+            } catch (error) {
+                console.error("Analitik hatası:", error);
+            }
+        };
+
+        reportView();
+
+        return () => {
+            updateDoc(analyticsRef, {
+                activeUsers: increment(-1)
+            }).catch(err => console.error("Çıkış hatası:", err));
+        };
+    }, []);
+
+    useEffect(() => {
         const fetchProductData = async () => {
             if (!selectedId) return;
             setLoading(true);
-            
+
             try {
                 const productsRef = collection(db, "products");
                 const qNumber = query(productsRef, where("id", "==", Number(selectedId)));
@@ -30,7 +58,7 @@ const Page = () => {
                 } else {
                     const qString = query(productsRef, where("id", "==", String(selectedId)));
                     const querySnapshotString = await getDocs(qString);
-                    
+
                     if (!querySnapshotString.empty) {
                         setProduct(querySnapshotString.docs[0].data());
                     } else {
@@ -93,11 +121,10 @@ const Page = () => {
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                        activeTab === tab.id
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === tab.id
                                             ? 'bg-blue-600/10 border border-blue-500/50 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.1)]'
                                             : 'text-slate-500 hover:text-slate-300 hover:bg-white/5 border border-transparent'
-                                    }`}
+                                        }`}
                                 >
                                     {tab.icon}
                                     <span className="hidden sm:inline">{tab.label}</span>

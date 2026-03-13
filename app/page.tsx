@@ -22,7 +22,7 @@ const page = () => {
 <PopularProducts/>
 
   <BrandSection/>
-  <RecentlyViewed/>
+ {/* <RecentlyViewed/> */}
 </div>
 
    
