@@ -3,16 +3,35 @@ import React from 'react';
 import { SlidersHorizontal, Check, Percent, Box, Star } from 'lucide-react';
 
 interface FiltersProps {
-  filters: any;
-  state: any;
-  setState: any;
+  filters: {
+    brands: string[];
+    genders: string[];
+  };
+  state: {
+    onlyInStock: boolean;
+    onlyDiscounted: boolean;
+    minPrice: string;
+    maxPrice: string;
+    selectedBrands: string[];
+    selectedGenders: string[];
+    minRating: number;
+  };
+  setState: {
+    setOnlyInStock: (val: boolean) => void;
+    setOnlyDiscounted: (val: boolean) => void;
+    setMinPrice: (val: string) => void;
+    setMaxPrice: (val: string) => void;
+    setSelectedBrands: (brand: string) => void;
+    setSelectedGenders: (gender: string) => void;
+    setMinRating: (rating: number) => void;
+  };
   resetFilters: () => void;
 }
 
 export const ProductFilters = ({ filters, state, setState, resetFilters }: FiltersProps) => {
   return (
     <aside className="w-full lg:w-80 lg:sticky lg:top-10 shrink-0 order-first">
-      <div className="flex flex-col bg-white/[0.03] border border-white/5 rounded-[2.5rem] h-[calc(100vh-120px)] backdrop-blur-md overflow-hidden">
+      <div className="flex flex-col bg-white/[0.03] border border-white/5 rounded-[2.5rem] h-fit max-h-[calc(100vh-120px)] backdrop-blur-md overflow-hidden">
         
         <div className="p-6 pb-4 flex items-center justify-between border-b border-white/5 shrink-0">
           <h2 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-white">
@@ -54,7 +73,7 @@ export const ProductFilters = ({ filters, state, setState, resetFilters }: Filte
               <input 
                 type="number" 
                 placeholder="Min" 
-                value={state.minPrice || ''} 
+                value={state.minPrice} 
                 onChange={(e) => setState.setMinPrice(e.target.value)} 
                 className="w-full bg-gray-900 border border-white/5 rounded-xl px-3 py-2.5 text-[11px] font-bold focus:border-blue-500 outline-none text-white" 
               />
@@ -62,25 +81,27 @@ export const ProductFilters = ({ filters, state, setState, resetFilters }: Filte
               <input 
                 type="number" 
                 placeholder="Max" 
-                value={state.maxPrice || ''} 
+                value={state.maxPrice} 
                 onChange={(e) => setState.setMaxPrice(e.target.value)} 
                 className="w-full bg-gray-900 border border-white/5 rounded-xl px-3 py-2.5 text-[11px] font-bold focus:border-blue-500 outline-none text-white" 
               />
             </div>
           </FilterSection>
 
-          <FilterSection title="Markalar">
-            <div className="space-y-3 mt-4">
-              {filters.brands.map((brand: string) => (
-                <CheckboxItem 
-                  key={brand} 
-                  label={brand} 
-                  checked={state.selectedBrands.includes(brand)} 
-                  onChange={() => setState.setSelectedBrands(brand)} 
-                />
-              ))}
-            </div>
-          </FilterSection>
+          {filters.brands && filters.brands.length > 0 && (
+            <FilterSection title="Markalar">
+              <div className="space-y-3 mt-4">
+                {filters.brands.map((brand: string) => (
+                  <CheckboxItem 
+                    key={brand} 
+                    label={brand} 
+                    checked={state.selectedBrands.includes(brand)} 
+                    onChange={() => setState.setSelectedBrands(brand)} 
+                  />
+                ))}
+              </div>
+            </FilterSection>
+          )}
 
           <FilterSection title="Cinsiyet">
             <div className="flex flex-wrap gap-2 mt-4">

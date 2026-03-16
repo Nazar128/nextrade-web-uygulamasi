@@ -8,11 +8,10 @@ import {
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { toast } from "react-hot-toast";
+import { sendNotification } from "@/lib/notifications";
 
-type SortOption = 'newest' | 'oldest' | 'highest' | 'lowest';
-
-const CommentSection = ({ productId }: { productId: string }) => {
-  const [sortBy, setSortBy] = useState<SortOption>('newest');
+const CommentSection = ({ productId, product }: { productId: string, product: any }) => {
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest');
   const [userRating, setUserRating] = useState(0);
   const [newComment, setNewComment] = useState("");
   const [comments, setComments] = useState<any[]>([]);
@@ -41,7 +40,6 @@ const CommentSection = ({ productId }: { productId: string }) => {
         setCheckingOrder(false);
         return;
       }
-
       try {
         const hasAlreadyReviewed = comments.some(c => c.userId === user.uid);
         if (hasAlreadyReviewed) {
@@ -49,7 +47,6 @@ const CommentSection = ({ productId }: { productId: string }) => {
           setCheckingOrder(false);
           return;
         }
-
         const ordersRef = collection(db, "orders");
         const q = query(ordersRef, where("userId", "==", user.uid), where("status", "==", "delivered"));
         const snapshot = await getDocs(q);
@@ -104,6 +101,15 @@ const CommentSection = ({ productId }: { productId: string }) => {
         createdAt: serverTimestamp(),
       });
 
+      if (product?.sellerId) {
+        await sendNotification(
+          String(product.sellerId),
+          'review',
+          'YENİ YORUM',
+          `"${newComment.trim()}"`
+        );
+      }
+
       setNewComment("");
       setUserRating(0);
       setImageFile(null);
@@ -140,7 +146,7 @@ const CommentSection = ({ productId }: { productId: string }) => {
           <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">Değerlendirme</p>
           <p className="text-sm font-bold text-white">{stats.avg} / 5.0 <span className="text-slate-500 font-normal">({stats.total})</span></p>
         </div>
-        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)} className="bg-slate-800 text-slate-300 text-[11px] px-2 py-1.5 rounded-lg outline-none border border-slate-700">
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="bg-slate-800 text-slate-300 text-[11px] px-2 py-1.5 rounded-lg outline-none border border-slate-700">
           <option value="newest">En Yeni</option>
           <option value="oldest">En Eski</option>
           <option value="highest">En Yüksek</option>
@@ -217,7 +223,7 @@ const CommentSection = ({ productId }: { productId: string }) => {
         ) : (
           <div className="flex items-center gap-2 px-2 py-1">
             <AlertCircle size={14} className="text-slate-600" />
-            <p className="text-[10px] text-slate-600 italic font-medium">Sadece ürünü satın alanlar ve yorum yapmamış olanlar değerlendirme bırakabilir.</p>
+            <p className="text-[10px] text-slate-600 italic font-medium">Sadece ürünü satın alanlar değerlendirme bırakabilir.</p>
           </div>
         )}
       </div>

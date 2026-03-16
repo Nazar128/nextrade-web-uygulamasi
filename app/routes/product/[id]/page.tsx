@@ -5,20 +5,54 @@ import QuestionSection from '@/components/QuestionSection';
 import { HelpCircle, MessageSquareText, ShieldCheck, Loader2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
-import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs,setDoc,getDoc, doc, updateDoc, increment } from "firebase/firestore";
+import { db, auth } from "@/lib/firebase";
+import { collection, query, where, getDocs, setDoc, getDoc, doc, updateDoc, increment } from "firebase/firestore";
 
 const Page = () => {
     const params = useParams();
-    const selectedId = params.id;
+    const rawId = params?.id;
+    const selectedId = Array.isArray(rawId) ? rawId[0] : rawId;
+    
     const [activeTab, setActiveTab] = useState('comment');
     const [product, setProduct] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const analyticsRef = doc(db, "analytics", "store_stats");
+        const fetchProductData = async () => {
+            if (!selectedId) return;
+            setLoading(true);
+            try {
+                const productsRef = collection(db, "products");
+                const qNumber = query(productsRef, where("id", "==", Number(selectedId)));
+                const querySnapshotNumber = await getDocs(qNumber);
 
+                if (!querySnapshotNumber.empty) {
+                    setProduct(querySnapshotNumber.docs[0].data());
+                } else {
+                    const qString = query(productsRef, where("id", "==", String(selectedId)));
+                    const querySnapshotString = await getDocs(qString);
+                    if (!querySnapshotString.empty) {
+                        setProduct(querySnapshotString.docs[0].data());
+                    } else {
+                        setProduct(null);
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+                setProduct(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProductData();
+    }, [selectedId]);
+
+    useEffect(() => {
+        if (!product || !selectedId) return;
+
+        const analyticsRef = doc(db, "analytics", "store_stats");
         const reportView = async () => {
+            if (auth.currentUser?.uid === product.sellerId) return;
             try {
                 const docSnap = await getDoc(analyticsRef);
                 if (!docSnap.exists()) {
@@ -30,51 +64,17 @@ const Page = () => {
                     });
                 }
             } catch (error) {
-                console.error("Analitik hatası:", error);
+                console.error(error);
             }
         };
-
         reportView();
 
         return () => {
             updateDoc(analyticsRef, {
                 activeUsers: increment(-1)
-            }).catch(err => console.error("Çıkış hatası:", err));
+            }).catch(() => {});
         };
-    }, []);
-
-    useEffect(() => {
-        const fetchProductData = async () => {
-            if (!selectedId) return;
-            setLoading(true);
-
-            try {
-                const productsRef = collection(db, "products");
-                const qNumber = query(productsRef, where("id", "==", Number(selectedId)));
-                const querySnapshotNumber = await getDocs(qNumber);
-
-                if (!querySnapshotNumber.empty) {
-                    setProduct(querySnapshotNumber.docs[0].data());
-                } else {
-                    const qString = query(productsRef, where("id", "==", String(selectedId)));
-                    const querySnapshotString = await getDocs(qString);
-
-                    if (!querySnapshotString.empty) {
-                        setProduct(querySnapshotString.docs[0].data());
-                    } else {
-                        setProduct(null);
-                    }
-                }
-            } catch (error) {
-                console.error("Ürün çekilirken hata oluştu:", error);
-                setProduct(null);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchProductData();
-    }, [selectedId]);
+    }, [product, selectedId]);
 
     if (loading) {
         return (
@@ -95,9 +95,6 @@ const Page = () => {
                         <ShieldCheck className="text-red-500" size={32} />
                     </div>
                     <h2 className="text-2xl font-bold text-white">Ürün Bulunamadı</h2>
-                    <p className="text-slate-400 mt-2 max-w-xs mx-auto text-sm">
-                        Aradığınız ürün (ID: {selectedId}) veritabanında mevcut değil veya kaldırılmış.
-                    </p>
                 </div>
             </div>
         );
@@ -134,13 +131,16 @@ const Page = () => {
                     </aside>
 
                     <div className="flex-1 bg-slate-900/20 border border-slate-800/60 rounded-2xl p-6 md:p-8 backdrop-blur-sm">
-                        {activeTab === 'comment' && (
+                        {activeTab === 'comment' && selectedId && (
                             <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                                 <header className="mb-6 flex items-center gap-3 text-white">
                                     <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
                                     <h2 className="text-xl font-bold tracking-tight">Ürün Yorumları</h2>
                                 </header>
-                                <CommentSection productId={String(selectedId)} />
+                                <CommentSection 
+                                    productId={String(selectedId)} 
+                                    product={product} 
+                                />
                             </div>
                         )}
 

@@ -40,34 +40,34 @@ const CategoryBar = () => {
             onMouseLeave={() => setActiveTab(null)}
         >
             <div className="max-w-[1500px] mx-auto px-2">
-                <div className="flex items-center justify-start gap-1 py-3 flex-wrap lg:flex-nowrap">
-
+                <div className="flex items-center justify-start gap-1 py-3 overflow-x-auto lg:overflow-visible no-scrollbar">
                     {categories.map((item) => (
                         <div
                             key={item.id}
                             className="relative shrink-0"
                             onMouseEnter={() => setActiveTab(item.id)}
                         >
-                            <button className={`flex items-center gap-1 px-3 py-2 rounded-lg text-[12px] font-medium transition-all duration-300 ${activeTab === item.id ? 'bg-white/10 text-white shadow-lg' : 'text-blue-200 hover:text-white'}`}>
+                            <Link 
+                                href={`/routes/category/${item.id}`}
+                                className={`flex items-center gap-1 px-3 py-2 rounded-lg text-[12px] font-medium transition-all duration-300 ${activeTab === item.id ? 'bg-white/10 text-white shadow-lg' : 'text-blue-200 hover:text-white'}`}
+                            >
                                 <span className="whitespace-nowrap uppercase tracking-wider">{item.title}</span>
                                 <ChevronDown size={12} className={`transition-transform duration-300 ${activeTab === item.id ? 'rotate-180' : ''}`} />
-                            </button>
+                            </Link>
 
-                            {activeTab === item.id && item.subCategories && (
+                            {activeTab === item.id && item.subCategories && item.subCategories.length > 0 && (
                                 <div className="absolute top-full left-0 mt-2 min-w-[240px] bg-slate-950 border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.7)] rounded-2xl p-2 z-[100] animate-in fade-in zoom-in-95">
                                     <div className="flex flex-col gap-1">
                                         <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-1">
                                             {item.title} Alt Kategorileri
                                         </p>
-
                                         {item.subCategories.map((sub: any, index: number) => {
-                                            const finalId = sub.id ? String(sub.id) : index.toString();
-
+                                            const subId = sub.id || index;
                                             return (
                                                 <Link
-                                                    key={`${item.id}-${index}`}
-                                                    href={`/routes/category/${finalId}`}
-                                                    className="..."
+                                                    key={`${item.id}-${subId}`}
+                                                    href={`/routes/category/${subId}`}
+                                                    className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 text-slate-300 hover:text-white transition-all group"
                                                 >
                                                     <span className="text-sm font-semibold">{sub.title}</span>
                                                 </Link>

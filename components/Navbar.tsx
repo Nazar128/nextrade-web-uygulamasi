@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
+import SearchBar from './SearchBar'
 
 const Navbar = () => {
   const role = "customer"; 
@@ -23,13 +24,10 @@ const Navbar = () => {
       </Link>
 
      
-      <div className='hidden md:flex flex-1 max-w-[600px] bg-white/10 hover:bg-white/15 border border-white/10 rounded-2xl items-center text-white px-4 py-2.5 transition-all group focus-within:ring-2 focus-within:ring-blue-500/50 focus-within:bg-white/20'>
-        <Search className='h-4 w-4 mr-3 text-slate-400 group-focus-within:text-white transition-colors' />
-        <input
-          placeholder='Aradığınız ürün, kategori veya marka...'
-          className='w-full bg-transparent text-sm focus:outline-none placeholder:text-slate-400'
-        />
-      </div>
+      
+        
+        <SearchBar/>
+     
 
       <div className="flex items-center gap-6 text-slate-300 text-sm font-medium">
         <Link href="/about" className={`flex items-center gap-2 hover:text-white transition-colors ${path === "/about" ? "text-blue-400" : ""}`}>

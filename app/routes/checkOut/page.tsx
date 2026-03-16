@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AddressForm } from "@/components/AddressForm";
 import PaymentForm from "@/components/PaymentForm";
 import OrderSummary from "@/components/OrderSummary";
+import { sendNotification } from "@/lib/notifications";
 
 export default function CheckOutPage() {
   const [step, setStep] = useState(1);
@@ -16,15 +17,28 @@ export default function CheckOutPage() {
     setStep(2); 
   };
 
-  const handlePaymentComplete = (paymentInfo: any | null) => {
-  if (paymentInfo) {
-    setPaymentMethodData(paymentInfo);
-    setIsPaymentComplete(true);
-  } else {
-    setIsPaymentComplete(false); 
-    setPaymentMethodData(null);
-  }
-};
+  const handlePaymentComplete = async (paymentInfo: any | null) => {
+    if (paymentInfo) {
+      setPaymentMethodData(paymentInfo);
+      setIsPaymentComplete(true);
+
+      if (paymentInfo.items) {
+        for (const item of paymentInfo.items) {
+          if (item.sellerId) {
+            await sendNotification(
+              String(item.sellerId),
+              'order',
+              'YENİ SİPARİŞ',
+              `${item.title} ürünü için sipariş alındı.`
+            );
+          }
+        }
+      }
+    } else {
+      setIsPaymentComplete(false); 
+      setPaymentMethodData(null);
+    }
+  };
 
   return (
     <div className="min-h-screen mx-auto text-white py-12 px-4 bg-[#0a0a0a]">

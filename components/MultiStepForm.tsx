@@ -5,9 +5,15 @@ import {
   Image as ImageIcon, CheckCircle2, Loader2, UploadCloud, 
   Clock, Palette, Hash, Users, FileText
 } from 'lucide-react';
-import { Categories } from '@/data/Categories'; 
 import { db, storage, auth } from "@/lib/firebase";
-import { doc, updateDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { 
+  doc, 
+  updateDoc, 
+  collection, 
+  addDoc, 
+  serverTimestamp, 
+  onSnapshot 
+} from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { onAuthStateChanged, User } from "firebase/auth";
 
@@ -24,6 +30,7 @@ export default function MultiStepForm({ onSuccess, initialData }: MultiStepFormP
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [dbCategories, setDbCategories] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
@@ -40,22 +47,28 @@ export default function MultiStepForm({ onSuccess, initialData }: MultiStepFormP
   });
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       setIsAuthLoading(false);
     });
-    return () => unsubscribe();
+
+    const unsubscribeCats = onSnapshot(collection(db, "categories"), (snapshot) => {
+      const cats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setDbCategories(cats);
+    });
+
+    return () => {
+      unsubscribeAuth();
+      unsubscribeCats();
+    };
   }, []);
 
-  const categoryTitle = useMemo(() => {
-    const selectedCat = Categories.find(c => c.id === Number(formData.categoryId));
-    return selectedCat ? selectedCat.title : "";
-  }, [formData.categoryId]);
+  const selectedCategoryData = useMemo(() => {
+    return dbCategories.find(c => c.id === formData.categoryId);
+  }, [formData.categoryId, dbCategories]);
 
-  const activeSubCategories = useMemo(() => {
-    const selectedCat = Categories.find(c => c.id === Number(formData.categoryId));
-    return selectedCat ? selectedCat.subCategories : [];
-  }, [formData.categoryId]);
+  const categoryTitle = selectedCategoryData?.title || "";
+  const activeSubCategories = selectedCategoryData?.subCategories || [];
 
   const toggleSize = (size: string) => {
     setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
@@ -135,7 +148,6 @@ export default function MultiStepForm({ onSuccess, initialData }: MultiStepFormP
 
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-[2.5rem] p-8 md:p-12 shadow-2xl max-w-3xl mx-auto text-gray-100">
-      {/* Stepper Header */}
       <div className="flex items-center justify-between mb-12 relative max-w-md mx-auto">
         <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gray-800 -translate-y-1/2 z-0" />
         {steps.map((s) => (
@@ -152,15 +164,15 @@ export default function MultiStepForm({ onSuccess, initialData }: MultiStepFormP
         {step === 1 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-2xl font-bold flex items-center gap-2"><FileText className="text-indigo-500"/> Ürün Bilgileri</h2>
-            <input type="text" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} placeholder="Ürün Başlığı (Örn: Oversize Pamuklu Tişört)" className="w-full p-4 bg-gray-950 border border-gray-800 rounded-2xl focus:border-indigo-500 outline-none transition-all" />
+            <input type="text" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} placeholder="Ürün Başlığı" className="w-full p-4 bg-gray-950 border border-gray-800 rounded-2xl focus:border-indigo-500 outline-none transition-all" />
             <div className="grid grid-cols-2 gap-5">
               <select value={formData.categoryId} onChange={(e) => setFormData({...formData, categoryId: e.target.value, subCategoryId: ''})} className="w-full p-4 bg-gray-950 border border-gray-800 rounded-2xl outline-none focus:border-indigo-500">
                 <option value="">Kategori Seçin</option>
-                {Categories.map(cat => <option key={cat.id} value={cat.id}>{cat.title}</option>)}
+                {dbCategories.map(cat => <option key={cat.id} value={cat.id}>{cat.title}</option>)}
               </select>
               <select disabled={!formData.categoryId} value={formData.subCategoryId} onChange={(e) => setFormData({...formData, subCategoryId: e.target.value})} className="w-full p-4 bg-gray-950 border border-gray-800 rounded-2xl outline-none disabled:opacity-30 focus:border-indigo-500">
                 <option value="">Alt Kategori</option>
-                {activeSubCategories.map(sub => <option key={sub.id} value={sub.id}>{sub.title}</option>)}
+                {activeSubCategories.map((sub: any) => <option key={sub.id} value={String(sub.id)}>{sub.title}</option>)}
               </select>
             </div>
             <div className="grid grid-cols-2 gap-5">
@@ -194,18 +206,16 @@ export default function MultiStepForm({ onSuccess, initialData }: MultiStepFormP
                 <input type="number" value={formData.stock} onChange={(e) => setFormData({...formData, stock: e.target.value})} placeholder="Adet" className="w-full p-4 bg-gray-950 border border-gray-800 rounded-2xl focus:border-indigo-500 outline-none" />
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-5">
                <div className="relative">
                 <Palette size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-                <input type="text" value={formData.color} onChange={(e) => setFormData({...formData, color: e.target.value})} placeholder="Renk (Örn: Mavi)" className="w-full p-4 pl-12 bg-gray-950 border border-gray-800 rounded-2xl focus:border-indigo-500 outline-none" />
+                <input type="text" value={formData.color} onChange={(e) => setFormData({...formData, color: e.target.value})} placeholder="Renk" className="w-full p-4 pl-12 bg-gray-950 border border-gray-800 rounded-2xl focus:border-indigo-500 outline-none" />
                </div>
                <div className="relative">
                 <Hash size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-                <input type="text" value={formData.pattern} onChange={(e) => setFormData({...formData, pattern: e.target.value})} placeholder="Desen (Düz, Çizgili...)" className="w-full p-4 pl-12 bg-gray-950 border border-gray-800 rounded-2xl focus:border-indigo-500 outline-none" />
+                <input type="text" value={formData.pattern} onChange={(e) => setFormData({...formData, pattern: e.target.value})} placeholder="Desen" className="w-full p-4 pl-12 bg-gray-950 border border-gray-800 rounded-2xl focus:border-indigo-500 outline-none" />
                </div>
             </div>
-
             <div className="space-y-3">
               <label className="text-[10px] text-gray-500 ml-2 uppercase font-bold">Mevcut Bedenler</label>
               <div className="flex flex-wrap gap-2">
@@ -216,10 +226,10 @@ export default function MultiStepForm({ onSuccess, initialData }: MultiStepFormP
             </div>
           </div>
         )}
+
         {step === 3 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-center">
             <h2 className="text-2xl font-bold flex items-center justify-center gap-2"><ImageIcon className="text-indigo-500"/> Ürün Görseli</h2>
-            
             <div className="relative border-2 border-dashed border-gray-800 rounded-[2.5rem] p-12 bg-gray-950/50 hover:bg-gray-900/50 transition-all cursor-pointer group">
               <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-20" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
               {imageFile ? (
@@ -236,14 +246,12 @@ export default function MultiStepForm({ onSuccess, initialData }: MultiStepFormP
                 </div>
               )}
             </div>
-
             <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl flex items-start gap-3 text-left">
               <Clock className="text-amber-500 shrink-0 mt-0.5" size={18} />
               <p className="text-[11px] text-amber-200/80 leading-relaxed italic">
                 Ürününüzü "Onaya Gönder" dediğinizde admin panelinde <strong>beklemede</strong> olarak görünecektir. Onay sonrası yayına alınır.
               </p>
             </div>
-
             <textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} placeholder="Ürün Açıklaması..." className="w-full p-5 bg-gray-950 border border-gray-800 rounded-[1.5rem] focus:border-indigo-500 outline-none h-32 resize-none text-sm" />
           </div>
         )}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { db } from "@/lib/firebase";
-import { collection, query, where, orderBy, onSnapshot, limit, QueryConstraint } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, limit, QueryConstraint, getDocs } from "firebase/firestore";
 import { Loader2, PackageX } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import { ProductFilters } from '@/components/ProductFilters';
@@ -12,10 +12,12 @@ const CategoryPage = () => {
     const params = useParams();
     const searchParams = useSearchParams();
     const router = useRouter();
-    const subCategoryId = params.id as string;
+    const urlId = params.id as string;
+    const numericId = Number(urlId); 
 
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [categoryInfo, setCategoryInfo] = useState<{ type: 'main' | 'sub', title: string } | null>(null);
 
     const brand = searchParams.get('brand') || 'all';
     const gender = searchParams.get('gender') || 'all';
@@ -39,10 +41,35 @@ const CategoryPage = () => {
     };
 
     useEffect(() => {
+        const detectCategoryType = async () => {
+            const catsSnap = await getDocs(collection(db, "categories"));
+            let detected = null;
+
+            for (const doc of catsSnap.docs) {
+                const data = doc.data();
+                if (Number(data.id) === numericId) {
+                    detected = { type: 'main', title: data.title };
+                    break;
+                }
+                const sub = data.subCategories?.find((s: any) => Number(s.id) === numericId);
+                if (sub) {
+                    detected = { type: 'sub', title: sub.title };
+                    break;
+                }
+            }
+            setCategoryInfo(detected as any);
+        };
+
+        if (urlId) detectCategoryType();
+    }, [urlId, numericId]);
+
+    useEffect(() => {
+        if (!categoryInfo) return;
+
         setLoading(true);
 
         const constraints: QueryConstraint[] = [
-            where("subCategoryId", "==", subCategoryId),
+            where(categoryInfo.type === 'main' ? "categoryId" : "subCategoryId", "==", numericId),
             where("status", "==", "approved")
         ];
 
@@ -50,6 +77,7 @@ const CategoryPage = () => {
         if (gender !== 'all') constraints.push(where("gender", "==", gender));
         if (inStock) constraints.push(where("inStock", "==", true));
         if (minRating > 0) constraints.push(where("rating", ">=", minRating));
+        
         if (minPrice) constraints.push(where("price", ">=", Number(minPrice)));
         if (maxPrice) constraints.push(where("price", "<=", Number(maxPrice)));
 
@@ -81,14 +109,20 @@ const CategoryPage = () => {
         });
 
         return () => unsubscribe();
-    }, [subCategoryId, brand, gender, minPrice, maxPrice, minRating, inStock, discounted, sort]);
+    }, [urlId, numericId, categoryInfo, brand, gender, minPrice, maxPrice, minRating, inStock, discounted, sort]);
 
     return (
         <div className="max-w-[1600px] mx-auto px-4 py-8 min-h-screen">
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-white">
+                    {categoryInfo?.title || 'Kategori Yükleniyor...'}
+                </h1>
+            </div>
+
             <div className="flex flex-col lg:flex-row gap-8">
                 <ProductFilters 
                     filters={{
-                        brands: ['Oakley', 'Nike', 'Adidas', 'Ray-Ban', 'Prada'],
+                        brands: ['Oakley', 'Nike', 'Adidas', 'Ray-Ban', 'Prada', 'Apple', 'Samsung'],
                         genders: ['Erkek', 'Kadın', 'Unisex']
                     }}
                     state={{
@@ -122,7 +156,7 @@ const CategoryPage = () => {
                     ) : (
                         <div className="text-center py-20 bg-white/5 rounded-[2.5rem] border border-dashed border-white/10 text-slate-500">
                             <PackageX className="mx-auto mb-4" size={48} />
-                            <p>Kriterlere uygun ürün bulunamadı.</p>
+                            <p>Bu kategoride kriterlere uygun ürün bulunamadı.</p>
                         </div>
                     )}
                 </div>
