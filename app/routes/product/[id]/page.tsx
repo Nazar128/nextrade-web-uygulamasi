@@ -2,6 +2,7 @@
 import CommentSection from '@/components/CommentSection';
 import ProductDetail from '@/components/ProductDetail';
 import QuestionSection from '@/components/QuestionSection';
+import { SellerMiniProfile } from '@/components/SellerMiniProfile'; 
 import { HelpCircle, MessageSquareText, ShieldCheck, Loader2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
@@ -89,13 +90,8 @@ const Page = () => {
 
     if (!product) {
         return (
-            <div className="min-h-[60vh] flex items-center justify-center p-6">
-                <div className="text-center p-10 bg-slate-900/50 rounded-3xl border border-white/5 backdrop-blur-md">
-                    <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <ShieldCheck className="text-red-500" size={32} />
-                    </div>
-                    <h2 className="text-2xl font-bold text-white">Ürün Bulunamadı</h2>
-                </div>
+            <div className="min-h-[60vh] flex items-center justify-center p-6 text-white text-center">
+                <h2 className="text-2xl font-bold">Ürün Bulunamadı</h2>
             </div>
         );
     }
@@ -103,10 +99,15 @@ const Page = () => {
     return (
         <main className="min-h-screen py-8 text-slate-300 mx-auto">
             <div className="max-w-7xl mx-auto px-4 sm:px-6">
-                <section className="mb-12">
+                <section className="mb-8">
                     <ProductDetail product={product} />
                 </section>
-
+                <div className="mb-10">
+                    <SellerMiniProfile
+                        sellerId={product.sellerId} 
+                        sellerName={product.sellerName} 
+                    />
+                </div>
                 <div className="flex flex-col lg:flex-row gap-8">
                     <aside className="lg:w-64 flex-shrink-0">
                         <nav className="flex lg:flex-col gap-2 p-1 bg-slate-900/30 border border-slate-800/50 rounded-xl">
@@ -131,16 +132,13 @@ const Page = () => {
                     </aside>
 
                     <div className="flex-1 bg-slate-900/20 border border-slate-800/60 rounded-2xl p-6 md:p-8 backdrop-blur-sm">
-                        {activeTab === 'comment' && selectedId && (
+                        {activeTab === 'comment' && (
                             <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                                 <header className="mb-6 flex items-center gap-3 text-white">
                                     <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
                                     <h2 className="text-xl font-bold tracking-tight">Ürün Yorumları</h2>
                                 </header>
-                                <CommentSection 
-                                    productId={String(selectedId)} 
-                                    product={product} 
-                                />
+                                <CommentSection productId={String(selectedId)} product={product} />
                             </div>
                         )}
 

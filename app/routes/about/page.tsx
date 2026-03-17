@@ -1,36 +1,57 @@
-"use client"
+"use client";
+import { useState, useEffect } from 'react';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import AboutHero from '@/components/AboutHero';
 import InfoCard from '@/components/InfoCard';
-import { Zap, ShieldCheck, ShoppingBag, TrendingUp, Globe, Cpu, Leaf } from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function AboutPage() {
+    const [data, setData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
     const router = useRouter();
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const docSnap = await getDoc(doc(db, "corporate", "about"));
+            if (docSnap.exists()) {
+                setData(docSnap.data());
+            }
+            setLoading(false);
+        };
+        fetchData();
+    }, []);
+
+    if (loading) return (
+        <div className="h-screen bg-slate-950 flex items-center justify-center">
+            <Icons.Loader2 className="animate-spin text-blue-500" size={48} />
+        </div>
+    );
+
     return (
         <main className="bg-slate-950 min-h-screen w-full overflow-x-hidden">
-            <AboutHero />
+            <AboutHero 
+                title={data?.heroTitle} 
+                subTitle={data?.heroSubTitle} 
+                bgImage={data?.heroBg} 
+            />
+            
             <section className="w-full px-6 md:px-20 -mt-32 relative z-20">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <InfoCard
-                        icon={<Zap size={32} />}
-                        title="Süper Hız"
-                        description="İşlemler saniyeler içinde gerçekleşir, beklemeye son."
-                    />
-                    <InfoCard
-                        icon={<ShieldCheck size={32} />}
-                        title="Kırılmaz Güven"
-                        description="Blockchain seviyesinde güvenlik ve koruma protokolleri."
-                    />
-                    <InfoCard
-                        icon={<Globe size={32} />}
-                        title="Global Erişim"
-                        description="Dünyanın her yerinden satıcı ve alıcıya kapımız açık."
-                    />
-                    <InfoCard
-                        icon={<Leaf size={32} />}
-                        title="Yeşil Lojistik"
-                        description="Karbon ayak izini minimize eden, doğa dostu teslimat süreçleri."
-                    />
+                    {data?.features?.map((item: any, index: number) => {
+                        const IconComponent = (Icons as any)[item.iconName || 'Zap'];
+                        return (
+                            <InfoCard 
+                                key={index}
+                                icon={<IconComponent size={32} />} 
+                                title={item.title} 
+                                description={item.description} 
+                            />
+                        );
+                    }) || (
+                        <p className="text-white">İçerik yüklenemedi...</p>
+                    )}
                 </div>
             </section>
 
@@ -39,13 +60,12 @@ export default function AboutPage() {
                     <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-[2rem] blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
                     <div className="relative overflow-hidden rounded-[2rem]">
                         <img
-                            src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=2070&auto=format&fit=crop"
+                            src={data?.visionImg}
                             className="w-full h-[600px] object-cover transition-transform duration-[5000ms] group-hover:scale-110"
-                            alt="Fütüristik Vizyon"
+                            alt="Vision"
                         />
                         <div className="absolute bottom-8 left-8 bg-black/60 backdrop-blur-xl p-6 rounded-2xl border border-white/10 max-w-xs">
-                            <p className="text-blue-400 font-mono text-xs mb-2 underline"></p>
-                            <p className="text-white text-sm">Tam otonom lojistik ve sıfır karbon salınımı ile ticaretin geleceğini kuruyoruz.</p>
+                            <p className="text-white text-sm">{data?.visionMiniDesc}</p>
                         </div>
                     </div>
                 </div>
@@ -54,28 +74,28 @@ export default function AboutPage() {
                     <div className="space-y-4">
                         <h2 className="text-blue-500 font-mono tracking-[0.3em] text-sm ">Vizyonumuz</h2>
                         <h3 className="text-5xl md:text-6xl font-bold text-white leading-tight ">
-                            Alışverişi <br /> Yeniden Kodluyoruz.
+                            {data?.visionTitle}
                         </h3>
                     </div>
 
                     <p className="text-slate-300 text-lg leading-relaxed">
-                        Marketplace projemiz sadece ürün satılan bir yer değil; verinin, teknolojinin ve kullanıcı deneyiminin kusursuz bir uyumla birleştiği bir **dijital evrendir.**
+                        {data?.visionDesc}
                     </p>
 
                     <div className="grid grid-cols-2 gap-8 border-t border-slate-800 pt-10">
                         <div>
-                            <p className="text-3xl font-bold text-white tracking-tighter">10M+</p>
-                            <p className="text-slate-500 text-sm  tracking-widest">AKTİF KULLANICI</p>
+                            <p className="text-3xl font-bold text-white tracking-tighter">{data?.statsUser}</p>
+                            <p className="text-slate-500 text-sm tracking-widest uppercase">AKTİF KULLANICI</p>
                         </div>
                         <div>
-                            <p className="text-3xl font-bold text-white italic tracking-tighter">100+</p>
-                            <p className="text-slate-500 text-sm  tracking-widest">ÜLKE ERİŞİMİ</p>
+                            <p className="text-3xl font-bold text-white italic tracking-tighter">{data?.statsCountry}</p>
+                            <p className="text-slate-500 text-sm tracking-widest uppercase">ÜLKE ERİŞİMİ</p>
                         </div>
                     </div>
 
-                    <button onClick={() => router.push("/")} className="group flex items-center gap-4 text-white font-bold bg-gradient-to-r from-blue-900 via-slate-300 to-blue-900 hover:bg-blue-700 px-8 py-4 rounded-full transition-all">
+                    <button onClick={() => router.push("/")} className="group flex items-center gap-4 text-white font-bold bg-blue-600 hover:bg-blue-500 px-8 py-4 rounded-full transition-all">
                         EKOSİSTEMİ İNCELE
-                        <Zap className="group-hover:animate-pulse" size={20} />
+                        <Icons.Zap className="group-hover:animate-pulse" size={20} />
                     </button>
                 </div>
             </section>
