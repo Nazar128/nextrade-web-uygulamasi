@@ -11,19 +11,15 @@ interface SellerMiniProfileProps {
 export const SellerMiniProfile = ({ sellerId, sellerName }: SellerMiniProfileProps) => {
   return (
     <div className="relative overflow-hidden group">
-      {/* Arka Plan Glow Efekti (Hover'da belirir) */}
       <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[2rem] blur opacity-0 group-hover:opacity-10 transition duration-500" />
       
       <div className="relative bg-[#0F1115] border border-white/5 rounded-[2rem] p-5 backdrop-blur-xl">
         <div className="flex items-center justify-between gap-6">
-          
-          {/* Sol Kısım: Avatar & Bilgi */}
           <div className="flex items-center gap-4">
             <div className="relative">
               <div className="w-12 h-12 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl flex items-center justify-center border border-white/5">
                 <Store size={20} className="text-blue-400" />
               </div>
-              {/* Online Noktası */}
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 border-2 border-[#0F1115] rounded-full" />
             </div>
 
@@ -48,7 +44,6 @@ export const SellerMiniProfile = ({ sellerId, sellerName }: SellerMiniProfilePro
             </div>
           </div>
 
-          {/* Sağ Kısım: Minimal Link */}
           <Link 
             href={`/routes/store/${sellerId}`}
             className="group/btn flex items-center gap-2 bg-white/[0.03] hover:bg-white text-slate-300 hover:text-black px-5 py-3 rounded-2xl text-[10px] font-bold tracking-tighter transition-all duration-300 border border-white/5 hover:border-white"
