@@ -13,20 +13,20 @@ const menuItems = [
 ];
 
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {
-    
+  
   return (
     <CustomerGuard>
-    <div className="flex    text-white relative">
+    <div className="flex text-brand-text bg-brand-bg relative transition-colors duration-300">
       
       <div className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] bg-gray-600/15 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-gray-300/10 blur-[120px] rounded-full" />
+        <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] bg-brand-primary/15 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-brand-primary/10 blur-[120px] rounded-full" />
       </div>
 
-      <aside className=" md:flex flex-col w-72 h-screen sticky top-0 bg-gradient-to-b from-gray-950 via-gray-700 to-gray-950 backdrop-blur-2xl  shadow-lg shadow-gray-500">
+      <aside className="hidden md:flex flex-col w-72 h-screen sticky top-0 bg-gradient-to-b from-brand-bg via-brand-card to-brand-bg backdrop-blur-2xl shadow-lg shadow-black/20 border-r border-brand-border/10">
         
         <div className="p-8">
-          <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent">
+          <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-br from-brand-text to-brand-text/40 bg-clip-text text-transparent">
             Hesabım
           </h2>
         </div>
@@ -36,21 +36,21 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
             <a 
               key={item.path} 
               href={item.path} 
-              className="group flex items-center gap-4 p-3 rounded-2xl transition-all duration-300 hover:bg-white/10 hover:translate-x-1"
+              className="group flex items-center gap-4 p-3 rounded-2xl transition-all duration-300 hover:bg-brand-primary/10 hover:translate-x-1"
             >
-              <span className="text-xl opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all">
+              <span className="text-xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:text-brand-primary transition-all text-brand-text">
                 {item.icon}
               </span>
-              <span className="text-gray-300 group-hover:text-white font-medium">
+              <span className="text-brand-text/70 group-hover:text-brand-text font-medium transition-colors">
                 {item.name}
               </span>
             </a>
           ))}
         </nav>
 
-        <div className="p-2 border-t border-white/5  mt-auto md:p-0">
-          <button className="flex items-center gap-2 w-full p-4 rounded-2xl text-red-600 hover:bg-red-700/10 hover:text-red-200 transition-all font-semibold">
-            <span className="text-xl">🚪</span>
+        <div className="p-2 border-t border-brand-border/10 mt-auto md:p-0">
+          <button className="flex items-center gap-2 w-full p-4 rounded-2xl text-red-500 hover:bg-red-500/10 transition-all font-semibold">
+            <LogOut size={20} />
             <span>Çıkış Yap</span>
           </button>
         </div>
