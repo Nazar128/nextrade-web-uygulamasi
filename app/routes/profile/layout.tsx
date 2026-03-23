@@ -9,6 +9,7 @@ const menuItems = [
   { name: "Siparişlerim", path: "/routes/profile/orders", icon: <Package size={20} /> },
   { name: "Favorilerim", path: "/routes/profile/wishlist", icon: <Heart size={20} /> },
   { name: "Adreslerim", path: "/routes/profile/addresses", icon: <MapPin size={20} /> },
+  { name: "Takip Ettiklerim", path: "/routes/profile/followedStores", icon: <MapPin size={20} /> },
   { name: "Ayarlar", path: "/routes/profile/settings", icon: <Settings size={20} /> },
 ];
 

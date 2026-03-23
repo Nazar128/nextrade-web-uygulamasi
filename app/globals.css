@@ -66,13 +66,15 @@
 }
 
 [data-theme='dark'] {
-  --brand-primary: 37 99 235;
-  --brand-bg: 3 7 18;
+ --brand-primary: 37 99 235;
+  --brand-bg: 3 7 18; 
   --brand-text: 248 250 252;
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
   --brand-card: 15 23 42;
   --brand-border: 31 41 55;
+  --background: oklch(0.129 0.042 264.695); 
+  --foreground: 248 250 252;
+
+
 }
 
 [data-theme='purple'] {

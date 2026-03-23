@@ -22,11 +22,11 @@ export default function SellerManagerPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col mx-auto p-6 md:p-12">
-      <div className="w-full max-w-5xl space-y-10 mx-auto">
+    <div className="min-h-screen  text-gray-100 flex flex-col mx-auto p-6 md:p-12">
+      <div className="w-full max-w-5xl space-y-6 mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 border-b border-gray-900 pb-10">
-           <h1 className="text-4xl font-black text-white tracking-tighter flex items-center gap-3">
-             <LayoutDashboard className="text-indigo-500" size={32} /> Yönetim Paneli
+           <h1 className="text-4xl font-bold text-blue-600 tracking-tighter flex items-center gap-3">
+             <LayoutDashboard className="text-indigo-500" size={32} /> YÖNETİM <span className='text-slate-600 text-3xl'>PANELİ</span>
            </h1>
            <div className="flex bg-gray-900 p-1.5 rounded-2xl border border-gray-800">
              <button onClick={() => {setActiveTab('inventory'); setIsFormOpen(false);}} className={`px-6 py-2.5 rounded-xl font-bold text-sm ${activeTab === 'inventory' ? 'bg-gray-800 text-white shadow-lg' : 'text-gray-500'}`}>Envanter</button>
@@ -35,7 +35,7 @@ export default function SellerManagerPage() {
         </div>
 
         {activeTab === 'inventory' && (
-          <div className="space-y-10">
+          <div className="space-y-8">
             {!isFormOpen ? (
               <>
                 <div className="flex justify-between items-end">
