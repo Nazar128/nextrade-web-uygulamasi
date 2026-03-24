@@ -1,46 +1,73 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { db, auth } from "@/lib/firebase";
-import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
+import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc, getDocs } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { 
   Package, ChevronRight, Clock, CheckCircle2, Truck, 
-  Box, Search, Loader2, X, CreditCard, MapPin 
+  Box, Search, Loader2, X, CreditCard, MapPin, RefreshCcw, Trash2 
 } from 'lucide-react';
+import ReturnManagement from "@/components/ReturnManagement";
 
 export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<any[]>([]);
+  const [returns, setReturns] = useState<any[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showReturnModal, setShowReturnModal] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
-        const q = query(
+        const qOrders = query(
           collection(db, "orders"),
           where("userId", "==", user.uid),
           orderBy("createdAt", "desc")
         );
 
-        const unsubscribeFirestore = onSnapshot(q, (snapshot) => {
-          const ordersData = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          setOrders(ordersData);
-          setLoading(false);
-        }, (err) => {
-          console.error("Firestore Hatası:", err);
+        const unsubscribeOrders = onSnapshot(qOrders, (snapshot) => {
+          setOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
           setLoading(false);
         });
-        return () => unsubscribeFirestore();
+
+        const qReturns = query(
+          collection(db, "returns"),
+          where("customerId", "==", user.uid)
+        );
+
+        const unsubscribeReturns = onSnapshot(qReturns, (snapshot) => {
+          setReturns(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        });
+
+        return () => {
+          unsubscribeOrders();
+          unsubscribeReturns();
+        };
       } else {
         setLoading(false);
       }
     });
     return () => unsubscribeAuth();
   }, []);
+
+  const handleCancelReturn = async (orderId: string) => {
+    if (!window.confirm("İade talebini iptal etmek istediğinize emin misiniz?")) return;
+    
+    setIsDeleting(true);
+    try {
+      const returnDoc = returns.find(r => r.orderId === orderId);
+      if (returnDoc) {
+        await deleteDoc(doc(db, "returns", returnDoc.id));
+        setSelectedOrder(null);
+      }
+    } catch (error) {
+      console.error("İptal hatası:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const getStatusConfig = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -66,10 +93,8 @@ export default function OrdersPage() {
 
   const formatDate = (date: any) => {
     if (!date) return "Tarih Belirsiz";
-    if (date?.seconds) {
-      return new Date(date.seconds * 1000).toLocaleDateString('tr-TR');
-    }
-    return new Date(date).toLocaleDateString('tr-TR');
+    const d = date?.seconds ? new Date(date.seconds * 1000) : new Date(date);
+    return d.toLocaleDateString('tr-TR');
   };
 
   if (loading) return (
@@ -115,10 +140,6 @@ export default function OrdersPage() {
                 key={order.id}
                 className={`group relative overflow-hidden rounded-[2.5rem] bg-[#0f1115] border border-white/5 hover:border-white/10 transition-all duration-500 p-1 shadow-2xl ${config.glow}`}
               >
-                <div className={`absolute -right-20 -top-20 w-64 h-64 opacity-0 group-hover:opacity-10 transition-opacity duration-700 blur-[80px] rounded-full 
-                  ${config.theme === 'cyan' ? 'bg-cyan-500' : config.theme === 'green' ? 'bg-green-500' : 'bg-yellow-500'}`} 
-                />
-
                 <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8 p-6 md:p-8">
                   <div className="flex items-center gap-6">
                     <div className={`w-16 h-16 rounded-2xl flex items-center justify-center border transition-all duration-500 group-hover:scale-110 shadow-lg ${themes[config.theme]}`}>
@@ -183,7 +204,7 @@ export default function OrdersPage() {
               </button>
             </div>
 
-            <div className="p-8 overflow-y-auto space-y-8">
+            <div className="p-8 overflow-y-auto space-y-8 flex-1 custom-scrollbar">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="bg-white/[0.03] p-6 rounded-3xl border border-white/5 space-y-4">
                   <div className="flex items-center gap-3 text-cyan-400">
@@ -222,10 +243,34 @@ export default function OrdersPage() {
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center gap-3 text-yellow-400 mb-4">
-                  <Package size={20} />
-                  <span className="font-black text-[10px] uppercase tracking-widest">Ürünler</span>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3 text-yellow-400">
+                    <Package size={20} />
+                    <span className="font-black text-[10px] uppercase tracking-widest">Ürünler</span>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    {selectedOrder.status === 'delivered' && (
+                      returns.some(r => r.orderId === selectedOrder.id) ? (
+                        <button 
+                          onClick={() => handleCancelReturn(selectedOrder.id)}
+                          disabled={isDeleting}
+                          className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
+                        >
+                          {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />} İadeyi İptal Et
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => setShowReturnModal(selectedOrder)}
+                          className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-[10px] font-black uppercase tracking-widest hover:bg-cyan-500 transition-all"
+                        >
+                          <RefreshCcw size={14} /> İade Talebi Oluştur
+                        </button>
+                      )
+                    )}
+                  </div>
                 </div>
+
                 <div className="grid gap-4">
                   {selectedOrder.items?.map((item: any, idx: number) => (
                     <div key={idx} className="flex items-center gap-6 p-4 bg-white/[0.02] border border-white/5 rounded-2xl group transition-all">
@@ -256,6 +301,16 @@ export default function OrdersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showReturnModal && (
+        <ReturnManagement 
+          order={showReturnModal} 
+          onClose={() => {
+            setShowReturnModal(null);
+            setSelectedOrder(null);
+          }} 
+        />
       )}
     </div>
   );
