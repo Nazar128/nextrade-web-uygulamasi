@@ -51,7 +51,7 @@ export default function CheckOutPage() {
           <div className={`w-16 h-[2px] transition-colors duration-500 ${step > 1 ? 'bg-blue-600' : 'bg-gray-800'}`} />
           <div className="flex items-center gap-2">
             <span className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-500 ${step === 2 ? 'bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.4)]' : 'bg-gray-800'}`}>2</span>
-            <span className={`text-sm font-bold ${step === 2 ? 'text-white' : 'text-gray-500'}`}>Ödeme</span>
+            <span className={`text-md font-bold ${step === 2 ? 'text-white' : 'text-gray-500'}`}>Ödeme</span>
           </div>
         </div>
 

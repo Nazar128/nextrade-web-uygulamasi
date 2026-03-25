@@ -44,7 +44,7 @@ const Shopping = () => {
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start min-h-[500px]">
-            <div className="lg:col-span-8 space-y-4">
+            <div className="lg:col-span-8 space-y-3">
                 <AnimatePresence mode="popLayout">
                     {cartItems.length > 0 ? (
                         cartItems.map((item) => (

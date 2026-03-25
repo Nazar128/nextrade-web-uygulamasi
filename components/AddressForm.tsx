@@ -103,7 +103,7 @@ const handleSubmit = async () => {
     <div className='w-full max-w-2xl bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/20 shadow-xl'>
       <div className='flex flex-col gap-8'>
         <div className='text-center'>
-          <h1 className='text-2xl font-black text-white uppercase'>Teslimat Bilgileri</h1>
+          <h1 className='text-2xl font-black text-white '>TESLİMAT BİLGİLERİ</h1>
           <div className='h-1 w-12 bg-blue-500 mx-auto mt-2 rounded-full'></div>
         </div>
 
